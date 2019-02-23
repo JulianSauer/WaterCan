@@ -4,6 +4,7 @@ import (
     "github.com/labstack/echo"
     "net/http"
     "strconv"
+    "../plant_state"
     "../hue"
     "github.com/amimof/huego"
 )
@@ -30,11 +31,15 @@ func UpdateMoisture(context echo.Context) error {
         return context.String(logError(context.Logger(), e))
     }
 
+    hueState := plant_state.Parse(float32(moistureLevel))
+
     sensor := context.Param("sensor")
 
-    context.Logger().Print("Current moisture of "+sensor+" is ", moistureLevel, "%")
     bridge, e := hue.Connect()
-    bridge.SetLightState(light, huego.State{Hue: 0})
+    bridge.SetLightState(light, huego.State{Hue: hueState})
+
+    context.Logger().Print("Current moisture of ", sensor, " is ", moistureLevel, "%")
+    context.Logger().Print("Updating light with id ", light, " to color ", hueState)
 
     return context.String(http.StatusOK, "")
 }
