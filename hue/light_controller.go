@@ -25,7 +25,7 @@ func Connect() (*huego.Bridge, error) {
     if e != nil || bridgeIp == "" {
         e = initialConnect()
         if e != nil {
-            return nil, nil
+            return nil, e
         }
     } else {
         bridge = huego.New(bridgeIp, USER)

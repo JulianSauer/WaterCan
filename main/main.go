@@ -36,6 +36,9 @@ func UpdateMoisture(context echo.Context) error {
     sensor := context.Param("sensor")
 
     bridge, e := hue.Connect()
+    if e != nil {
+        return context.String(logError(context.Logger(), e))
+    }
     bridge.SetLightState(light, huego.State{Hue: hueState})
 
     context.Logger().Print("Current moisture of ", sensor, " is ", moistureLevel, "%")
