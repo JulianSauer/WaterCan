@@ -6,10 +6,15 @@ import (
     "strconv"
     "../plant_state"
     "../hue"
-    "github.com/amimof/huego"
+    "fmt"
 )
 
 func main() {
+    e := hue.InitialConnect()
+    if e != nil {
+        fmt.Println(e.Error())
+    }
+
     router := echo.New()
     router.GET("/update/:sensor/:light", UpdateMoisture)
     router.Logger.Fatal(router.Start(":8083"))
@@ -32,15 +37,17 @@ func UpdateMoisture(context echo.Context) error {
     }
 
     hueState := plant_state.Parse(float32(moistureLevel))
-
-    sensor := context.Param("sensor")
-
-    bridge, e := hue.Connect()
+    state, e := hue.GetLightState(2)
     if e != nil {
         return context.String(logError(context.Logger(), e))
     }
-    bridge.SetLightState(light, huego.State{Hue: hueState})
+    state.Hue = hueState
+    e = hue.SetLightState(2, state)
+    if e != nil {
+        return context.String(logError(context.Logger(), e))
+    }
 
+    sensor := context.Param("sensor")
     context.Logger().Print("Current moisture of ", sensor, " is ", moistureLevel, "%")
     context.Logger().Print("Updating light with id ", light, " to color ", hueState)
 

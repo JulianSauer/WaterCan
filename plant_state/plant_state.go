@@ -15,8 +15,8 @@ type config struct {
     Max float32
 }
 
-func Parse(plantState float32) uint16 {
-    return uint16((plantState / configFile.Max) * GREEN)
+func Parse(plantState float32) int {
+    return int((plantState / configFile.Max) * GREEN)
 }
 
 func load() config {
