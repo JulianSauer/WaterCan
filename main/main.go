@@ -26,7 +26,7 @@ func UpdateMoisture(context echo.Context) error {
         return context.String(http.StatusBadRequest, "Missing parameter: 'moisture'")
     }
 
-    moistureLevel, e := strconv.Atoi(context.QueryParam("moisture"))
+    moistureLevel, e := strconv.ParseFloat(context.QueryParam("moisture"), 64)
     if e != nil {
         return context.String(logError(context.Logger(), e))
     }
@@ -36,20 +36,15 @@ func UpdateMoisture(context echo.Context) error {
         return context.String(logError(context.Logger(), e))
     }
 
-    hueState := plant_state.Parse(float32(moistureLevel))
-    state, e := hue.GetLightState(2)
-    if e != nil {
-        return context.String(logError(context.Logger(), e))
-    }
-    state.Hue = hueState
-    e = hue.SetLightState(2, state)
+    rgb := plant_state.Parse(moistureLevel)
+    e = hue.SetLightColor(2, rgb[0], rgb[1], rgb[2])
     if e != nil {
         return context.String(logError(context.Logger(), e))
     }
 
     sensor := context.Param("sensor")
     context.Logger().Print("Current moisture of ", sensor, " is ", moistureLevel, "%")
-    context.Logger().Print("Updating light with id ", light, " to color ", hueState)
+    context.Logger().Print("Updating light with id ", light, " to color (", rgb[0], ", ", rgb[1], ", ", rgb[2], ")")
 
     return context.String(http.StatusOK, "")
 }

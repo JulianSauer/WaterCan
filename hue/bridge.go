@@ -29,15 +29,26 @@ func InitialConnect() error {
     return nil
 }
 
-func SetLightState(id int, state *light.State) error {
+func SetLightColor(id int, red float64, green float64, blue float64) error {
+    xy := ConvertRGBToXY(red, green, blue)
+    body := fmt.Sprintf("{\"xy\": [%f, %f]}", xy[0], xy[1])
+    return SetLightState(id, body)
+}
+
+func SetLightState(id int, body string) error {
     baseUrl, e := baseUrl()
     if e != nil {
         return e
     }
 
-    _, e = resty.R().
-        SetBody(state).
+    response, e := resty.R().
+        SetBody(body).
         Put(baseUrl + "lights/" + strconv.Itoa(id) + "/state")
+    bridgeError := make([]BridgeError, 0)
+    e = json.Unmarshal(response.Body(), &bridgeError)
+    if e == nil && bridgeError[0].Error.Description != "" {
+        return errors.New(bridgeError[0].Error.Description)
+    }
     return e
 }
 
@@ -63,8 +74,8 @@ func GetLightState(id int) (*light.State, error) {
 func ConvertRGBToXY(red float64, green float64, blue float64) [2]float64 {
     var normalizedToOne [3]float64
     normalizedToOne[0] = red / 255
-    normalizedToOne[2] = green / 255
-    normalizedToOne[1] = blue / 255
+    normalizedToOne[1] = green / 255
+    normalizedToOne[2] = blue / 255
     red = enhanceColor(normalizedToOne[0])
     green = enhanceColor(normalizedToOne[1])
     blue = enhanceColor(normalizedToOne[2])
