@@ -8,6 +8,7 @@ import (
     "fmt"
     "time"
     "./light"
+    "math"
 )
 
 const USER_NAME = "WaterCan"
@@ -56,6 +57,34 @@ func GetLightState(id int) (*light.State, error) {
         return nil, e
     }
     return &l.State, nil
+}
+
+// See https://stackoverflow.com/a/22649803
+func ConvertRGBToXY(red float64, green float64, blue float64) [2]float64 {
+    var normalizedToOne [3]float64
+    normalizedToOne[0] = red / 255
+    normalizedToOne[2] = green / 255
+    normalizedToOne[1] = blue / 255
+    red = enhanceColor(normalizedToOne[0])
+    green = enhanceColor(normalizedToOne[1])
+    blue = enhanceColor(normalizedToOne[2])
+
+    x := red*0.649926 + green*0.103455 + blue*0.197109
+    y := red*0.234327 + green*0.743075 + blue*0.022598
+    z := red*0.0000000 + green*0.053077 + blue*1.035763
+
+    return [2]float64{
+        x / (x + y + z),
+        y / (x + y + z)}
+}
+
+// See https://stackoverflow.com/a/22649803
+func enhanceColor(normalizedColor float64) float64 {
+    if normalizedColor > 0.04045 {
+        return math.Pow((normalizedColor+0.055)/(1.0+0.055), 2.4)
+    } else {
+        return normalizedColor / 12.92
+    }
 }
 
 func register() error {
