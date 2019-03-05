@@ -7,7 +7,10 @@ import (
     "../plant_state"
     "../hue"
     "fmt"
+    "time"
 )
+
+const UPDATE_RATE = 10 * time.Second
 
 func main() {
     e := hue.InitialConnect()
@@ -37,14 +40,9 @@ func UpdateMoisture(context echo.Context) error {
     }
 
     rgb := plant_state.Parse(moistureLevel)
-    e = hue.SetLightColor(2, rgb[0], rgb[1], rgb[2])
-    if e != nil {
-        return context.String(logError(context.Logger(), e))
-    }
+    go updateLight(light, rgb[0], rgb[1], rgb[2], context.Logger())
 
-    sensor := context.Param("sensor")
-    context.Logger().Print("Current moisture of ", sensor, " is ", moistureLevel, "%")
-    context.Logger().Print("Updating light with id ", light, " to color (", rgb[0], ", ", rgb[1], ", ", rgb[2], ")")
+    context.Logger().Print("Current moisture is ", moistureLevel, "%")
 
     return context.String(http.StatusOK, "")
 }
@@ -52,4 +50,21 @@ func UpdateMoisture(context echo.Context) error {
 func logError(logger echo.Logger, e error) (int, string) {
     logger.Print(e.Error())
     return http.StatusBadRequest, e.Error()
+}
+
+func updateLight(id int, red float64, green float64, blue float64, logger echo.Logger) {
+    logger.Print("Will update light with id ", id, " to color (", red, ", ", green, ", ", blue, ") as soon as it's turned on")
+    for {
+        e := hue.SetLightColor(id, red, green, blue)
+        if e != nil {
+            if e.Error() == "parameter, xy, is not modifiable. Device is set to off." {
+                time.Sleep(UPDATE_RATE)
+                continue
+            } else {
+                logger.Print(e.Error())
+            }
+        }
+        break
+    }
+    logger.Print("Updated light with id ", id, " to color (", red, ", ", green, ", ", blue, ")")
 }
