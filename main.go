@@ -58,9 +58,31 @@ func UpdateMoisture(context echo.Context) error {
     return context.String(http.StatusOK, "")
 }
 
+// Forces an update on all sensors or a specific one
+// sensor:  Use an id if only one sensor should be updated
+//          If not provided, the default sensors will be loaded from config.json
+// light:   Use the specific id of a Philiphs Hue light
+//          If not provided, the default light will be loaded from config.json
 func ForceUpdate(context echo.Context) error {
+    ids, e := getSensorFromParam(context)
+    if e != nil {
+        return context.String(logError(context.Logger(), e))
+    }
 
-    return nil
+    moistureLevel, e := moistureOfDriestPlant(ids)
+    if e != nil {
+        return context.String(logError(context.Logger(), e))
+    }
+
+    light, e := getLightFromParam(context)
+    if e != nil {
+        return context.String(logError(context.Logger(), e))
+    }
+
+    rgb := plant_state.Parse(moistureLevel)
+    go updateLight(light, rgb[0], rgb[1], rgb[2], context.Logger())
+
+    return context.String(http.StatusOK, "")
 }
 
 func logError(logger echo.Logger, e error) (int, string) {
@@ -83,4 +105,65 @@ func updateLight(id int, red float64, green float64, blue float64, logger echo.L
         break
     }
     logger.Print("Updated light with id ", id, " to color (", red, ", ", green, ", ", blue, ")")
+}
+
+func moistureOfDriestPlant(ids []int) (float64, error) {
+    hourlyStats, e := logs.GetHourlyStats(ids)
+    if e != nil {
+        return 0, e
+    }
+
+    const dateFormat = "1/2/2006"
+    var latestDate *time.Time = nil
+    var latestStats logs.Stats
+    for _, stats := range hourlyStats.Content.Stats {
+        date, e := time.Parse(dateFormat, stats.Date)
+        if e != nil {
+            return 0, e
+        }
+        if latestDate == nil || latestDate.Before(date) {
+            latestDate = &date
+            latestStats = stats
+        }
+    }
+
+    var lowestMoisture = math.MaxFloat64
+    for _, values := range latestStats.Values {
+        for _, moisture := range values {
+            if moisture >= 0 && lowestMoisture > moisture {
+                lowestMoisture = moisture
+            }
+        }
+    }
+    return lowestMoisture, nil
+}
+
+func getMoistureFromParam(context echo.Context) (float64, error) {
+    if context.QueryParam("moisture") == "" {
+        context.Logger().Print("missing parameter: 'moisture'")
+        return 0, errors.New("missing parameter: 'moisture'")
+    }
+
+    return strconv.ParseFloat(context.QueryParam("moisture"), 64)
+}
+
+func getLightFromParam(context echo.Context) (int, error) {
+    if context.QueryParam("light") == "" {
+        return config.Load().Light, nil
+    } else {
+        return strconv.Atoi(context.QueryParam("light"))
+    }
+}
+
+func getSensorFromParam(context echo.Context) ([]int, error) {
+    configuration := config.Load()
+    if context.QueryParam("sensor") == "" {
+        return configuration.SensorIds, nil
+    } else {
+        id, e := strconv.Atoi(context.QueryParam("sensor"))
+        if e != nil {
+            return []int{}, e
+        }
+        return []int{id}, nil
+    }
 }
