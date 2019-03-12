@@ -4,10 +4,11 @@ import (
     "github.com/labstack/echo"
     "net/http"
     "strconv"
-    "../plant_state"
-    "../hue"
+    "WaterCan/plant_state"
+    "WaterCan/hue"
     "fmt"
     "time"
+    "WaterCan/wireless_sensor_tags"
 )
 
 const UPDATE_RATE = 10 * time.Second
@@ -19,7 +20,14 @@ func main() {
     }
 
     router := echo.New()
+
+    e = wireless_sensor_tags.Login()
+    if e != nil {
+        router.Logger.Fatal(e.Error())
+    }
+
     router.GET("/update/:sensor/:light", UpdateMoisture)
+    router.GET("forceUpdate", ForceUpdate)
     router.Logger.Fatal(router.Start(":8083"))
 }
 
@@ -45,6 +53,11 @@ func UpdateMoisture(context echo.Context) error {
     context.Logger().Print("Current moisture is ", moistureLevel, "%")
 
     return context.String(http.StatusOK, "")
+}
+
+func ForceUpdate(context echo.Context) error {
+
+    return nil
 }
 
 func logError(logger echo.Logger, e error) (int, string) {

@@ -7,8 +7,8 @@ import (
     "encoding/json"
     "fmt"
     "time"
-    "./light"
     "math"
+    "WaterCan/hue/light"
 )
 
 const USER_NAME = "WaterCan"
