@@ -1,5 +1,6 @@
 {
-  "Max": 100.0,
+  "Max": 25.0,
+  "Min": 5.0,
   "Light": 1,
   "SensorIds": [
     1,

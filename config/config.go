@@ -10,6 +10,7 @@ const CONFIG_NAME = "config.json"
 
 type Config struct {
     Max       float64
+    Min       float64
     Light     int
     SensorIds []int
 }

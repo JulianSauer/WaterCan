@@ -7,7 +7,8 @@ import (
 var configFile = config.Load()
 
 func Parse(plantState float64) [3]float64 {
-    percentage := plantState / configFile.Max
+    percentage := (plantState - configFile.Min) /
+        (configFile.Max - configFile.Min)
     if percentage >= 0.9 {
         return [3]float64{0, 255, 0}
     } else if percentage >= 0.8 {
