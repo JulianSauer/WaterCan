@@ -9,7 +9,9 @@ import (
 const CONFIG_NAME = "config.json"
 
 type Config struct {
-    Max float64
+    Max       float64
+    Light     int
+    SensorIds []int
 }
 
 func Load() *Config {

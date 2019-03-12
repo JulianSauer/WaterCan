@@ -9,6 +9,10 @@ import (
     "fmt"
     "time"
     "WaterCan/wireless_sensor_tags"
+    "WaterCan/wireless_sensor_tags/api/logs"
+    "math"
+    "WaterCan/config"
+    "errors"
 )
 
 const UPDATE_RATE = 10 * time.Second
@@ -23,26 +27,25 @@ func main() {
 
     e = wireless_sensor_tags.Login()
     if e != nil {
-        router.Logger.Fatal(e.Error())
+        router.Logger.Print(e.Error())
     }
 
-    router.GET("/update/:sensor/:light", UpdateMoisture)
+    router.GET("/update/:sensor", UpdateMoisture)
     router.GET("forceUpdate", ForceUpdate)
     router.Logger.Fatal(router.Start(":8083"))
 }
 
+// Updates a light with the given moisture value
+// moisture:    Current level that will define the color of a light
+// light:       Use the specific id of a Philiphs Hue light
+//              If not provided, the default light will be loaded from config.json
 func UpdateMoisture(context echo.Context) error {
-    if context.QueryParam("moisture") == "" {
-        context.Logger().Print("Missing parameter: 'moisture'")
-        return context.String(http.StatusBadRequest, "Missing parameter: 'moisture'")
-    }
-
-    moistureLevel, e := strconv.ParseFloat(context.QueryParam("moisture"), 64)
+    moistureLevel, e := getMoistureFromParam(context)
     if e != nil {
         return context.String(logError(context.Logger(), e))
     }
 
-    light, e := strconv.Atoi(context.Param("light"))
+    light, e := getLightFromParam(context)
     if e != nil {
         return context.String(logError(context.Logger(), e))
     }
