@@ -1,14 +1,14 @@
 package hue
 
 import (
-    "gopkg.in/resty.v1"
-    "errors"
-    "strconv"
     "encoding/json"
+    "errors"
     "fmt"
-    "time"
+    "github.com/JulianSauer/WaterCan/hue/light"
+    "gopkg.in/resty.v1"
     "math"
-    "WaterCan/hue/light"
+    "strconv"
+    "time"
 )
 
 const USER_NAME = "WaterCan"

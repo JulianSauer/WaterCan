@@ -1,9 +1,9 @@
 package logs
 
 import (
-    "gopkg.in/resty.v1"
-    "WaterCan/wireless_sensor_tags/api"
     "encoding/json"
+    "github.com/JulianSauer/WaterCan/wireless_sensor_tags/api"
+    "gopkg.in/resty.v1"
 )
 
 type GetHourlyStatsRequest struct {

@@ -1,9 +1,9 @@
 package client
 
 import (
-    "gopkg.in/resty.v1"
     "encoding/json"
-    "WaterCan/wireless_sensor_tags/api"
+    "github.com/JulianSauer/WaterCan/wireless_sensor_tags/api"
+    "gopkg.in/resty.v1"
 )
 
 type IsSignedInResponse struct {

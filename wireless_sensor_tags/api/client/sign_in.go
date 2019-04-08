@@ -1,8 +1,8 @@
 package client
 
 import (
+    "github.com/JulianSauer/WaterCan/wireless_sensor_tags/api"
     "gopkg.in/resty.v1"
-    "WaterCan/wireless_sensor_tags/api"
 )
 
 type SignInRequest struct {

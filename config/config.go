@@ -1,9 +1,9 @@
 package config
 
 import (
-    "os"
-    "fmt"
     "encoding/json"
+    "fmt"
+    "os"
 )
 
 const CONFIG_NAME = "config.json"

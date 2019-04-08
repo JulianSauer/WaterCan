@@ -2,12 +2,12 @@ package wireless_sensor_tags
 
 import (
     "bufio"
-    "os"
     "fmt"
+    "github.com/JulianSauer/WaterCan/wireless_sensor_tags/api/client"
     "golang.org/x/crypto/ssh/terminal"
-    "syscall"
+    "os"
     "strings"
-    "WaterCan/wireless_sensor_tags/api/client"
+    "syscall"
 )
 
 var username *string

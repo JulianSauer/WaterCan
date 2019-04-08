@@ -1,8 +1,8 @@
 package hue
 
 import (
-    "os"
     "encoding/json"
+    "os"
 )
 
 type cache struct {
@@ -11,6 +11,7 @@ type cache struct {
 }
 
 const CACHE = "cache.json"
+
 var cacheContent *cache = nil
 
 func loadCache() (*cache, error) {

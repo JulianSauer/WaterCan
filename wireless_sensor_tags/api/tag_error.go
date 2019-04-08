@@ -2,8 +2,8 @@ package api
 
 import (
     "encoding/json"
-    "gopkg.in/resty.v1"
     "errors"
+    "gopkg.in/resty.v1"
 )
 
 type TagError struct {

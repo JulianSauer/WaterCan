@@ -1,18 +1,18 @@
 package main
 
 import (
+    "errors"
+    "fmt"
+    "github.com/JulianSauer/WaterCan/config"
+    "github.com/JulianSauer/WaterCan/hue"
+    "github.com/JulianSauer/WaterCan/plant_state"
+    "github.com/JulianSauer/WaterCan/wireless_sensor_tags"
+    "github.com/JulianSauer/WaterCan/wireless_sensor_tags/api/logs"
     "github.com/labstack/echo"
+    "math"
     "net/http"
     "strconv"
-    "WaterCan/plant_state"
-    "WaterCan/hue"
-    "fmt"
     "time"
-    "WaterCan/wireless_sensor_tags"
-    "WaterCan/wireless_sensor_tags/api/logs"
-    "math"
-    "WaterCan/config"
-    "errors"
 )
 
 const UPDATE_RATE = 10 * time.Second

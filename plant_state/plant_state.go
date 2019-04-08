@@ -1,7 +1,7 @@
 package plant_state
 
 import (
-    "WaterCan/config"
+    "github.com/JulianSauer/WaterCan/config"
 )
 
 var configFile = config.Load()
