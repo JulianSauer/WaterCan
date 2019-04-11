@@ -18,9 +18,12 @@ import (
 const UPDATE_RATE = 10 * time.Second
 
 func main() {
+    fmt.Println("Connecting to Philips Hue...")
     e := hue.InitialConnect()
     if e != nil {
         fmt.Println(e.Error())
+    } else {
+        fmt.Println("Connected")
     }
 
     router := echo.New()

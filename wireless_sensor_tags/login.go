@@ -42,7 +42,7 @@ func loginPromt() (string, string, error) {
     reader := bufio.NewReader(os.Stdin)
 
     fmt.Println("Please enter your Wireless Sensor Tags credentials")
-    fmt.Print("Username: ")
+    fmt.Print("Username/email: ")
     username, e := reader.ReadString('\n')
     if e != nil {
         return "", "", e
