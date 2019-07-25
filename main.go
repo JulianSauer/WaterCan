@@ -1,15 +1,12 @@
 package main
 
 import (
-    "errors"
     "fmt"
     "github.com/JulianSauer/WaterCan/config"
     "github.com/JulianSauer/WaterCan/hue"
     "github.com/JulianSauer/WaterCan/plant_state"
     "github.com/JulianSauer/WaterCan/wireless_sensor_tags"
-    "github.com/JulianSauer/WaterCan/wireless_sensor_tags/api/logs"
     "github.com/labstack/echo"
-    "math"
     "net/http"
     "strconv"
     "time"
@@ -33,53 +30,17 @@ func main() {
         router.Logger.Print(e.Error())
     }
 
-    router.GET("/update/:sensor", UpdateMoisture)
     router.GET("forceUpdate", ForceUpdate)
     router.Logger.Fatal(router.Start(":8083"))
-}
-
-// Updates a light with the given moisture value
-// moisture:    Current level that will define the color of a light
-// light:       Use the specific id of a Philiphs Hue light
-//              If not provided, the default light will be loaded from config.json
-func UpdateMoisture(context echo.Context) error {
-    moistureLevel, e := getMoistureFromParam(context)
-    if e != nil {
-        return context.String(logError(context.Logger(), e))
-    }
-
-    light, e := getLightFromParam(context)
-    if e != nil {
-        return context.String(logError(context.Logger(), e))
-    }
-
-    rgb := plant_state.Parse(moistureLevel)
-    go updateLight(light, rgb[0], rgb[1], rgb[2], -1, context.Logger())
-
-    context.Logger().Print("Current moisture is ", moistureLevel, "%")
-
-    return context.String(http.StatusOK, "")
 }
 
 // Forces an update on all sensors or a specific one
 // sensor:  Use an id if only one sensor should be updated
 //          If not provided, the default sensors will be loaded from config.json
-// light:   Use the specific id of a Philiphs Hue light
-//          If not provided, the default light will be loaded from config.json
 // timeout: Timeout in seconds
 //          If non provided, it will try forever to change the color
 func ForceUpdate(context echo.Context) error {
-    ids, e := getSensorFromParam(context)
-    if e != nil {
-        return context.String(logError(context.Logger(), e))
-    }
-
-    moistureLevel, e := moistureOfDriestPlant(ids)
-    if e != nil {
-        return context.String(logError(context.Logger(), e))
-    }
-
-    light, e := getLightFromParam(context)
+    sensors, e := getSensorFromParam(context)
     if e != nil {
         return context.String(logError(context.Logger(), e))
     }
@@ -89,8 +50,13 @@ func ForceUpdate(context echo.Context) error {
         return context.String(logError(context.Logger(), e))
     }
 
-    rgb := plant_state.Parse(moistureLevel)
-    go updateLight(light, rgb[0], rgb[1], rgb[2], timeout, context.Logger())
+    lightsToRgb, e := plant_state.ParseValues(sensors)
+    if e != nil {
+        return context.String(logError(context.Logger(), e))
+    }
+    for lightId, rgb := range lightsToRgb {
+        go updateLight(lightId, rgb[0], rgb[1], rgb[2], timeout, context.Logger())
+    }
 
     return context.String(http.StatusOK, "")
 }
@@ -124,64 +90,16 @@ func updateLight(id int, red float64, green float64, blue float64, timeout int, 
     }
 }
 
-func moistureOfDriestPlant(ids []int) (float64, error) {
-    hourlyStats, e := logs.GetHourlyStats(ids)
-    if e != nil {
-        return 0, e
-    }
-
-    const dateFormat = "1/2/2006"
-    var latestDate *time.Time = nil
-    var latestStats logs.Stats
-    for _, stats := range hourlyStats.Content.Stats {
-        date, e := time.Parse(dateFormat, stats.Date)
-        if e != nil {
-            return 0, e
-        }
-        if latestDate == nil || latestDate.Before(date) {
-            latestDate = &date
-            latestStats = stats
-        }
-    }
-
-    var lowestMoisture = math.MaxFloat64
-    for _, values := range latestStats.Values {
-        for _, moisture := range values {
-            if moisture >= 0 && lowestMoisture > moisture {
-                lowestMoisture = moisture
-            }
-        }
-    }
-    return lowestMoisture, nil
-}
-
-func getMoistureFromParam(context echo.Context) (float64, error) {
-    if context.QueryParam("moisture") == "" {
-        context.Logger().Print("missing parameter: 'moisture'")
-        return 0, errors.New("missing parameter: 'moisture'")
-    }
-
-    return strconv.ParseFloat(context.QueryParam("moisture"), 64)
-}
-
-func getLightFromParam(context echo.Context) (int, error) {
-    if context.QueryParam("light") == "" {
-        return config.Load().Light, nil
-    } else {
-        return strconv.Atoi(context.QueryParam("light"))
-    }
-}
-
-func getSensorFromParam(context echo.Context) ([]int, error) {
+func getSensorFromParam(context echo.Context) ([]*config.Sensor, error) {
     configuration := config.Load()
     if context.QueryParam("sensor") == "" {
-        return configuration.SensorIds, nil
+        return configuration.Sensors, nil
     } else {
         id, e := strconv.Atoi(context.QueryParam("sensor"))
         if e != nil {
-            return []int{}, e
+            return nil, e
         }
-        return []int{id}, nil
+        return []*config.Sensor{config.GetSensor(configuration.Sensors, id)}, nil
     }
 }
 

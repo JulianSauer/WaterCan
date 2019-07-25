@@ -9,10 +9,14 @@ import (
 const CONFIG_NAME = "config.json"
 
 type Config struct {
-    Max       float64
-    Min       float64
-    Light     int
-    SensorIds []int
+    Sensors []*Sensor
+}
+
+type Sensor struct {
+    Max      float64
+    Min      float64
+    Light    int
+    SensorId int
 }
 
 func Load() *Config {
@@ -29,4 +33,26 @@ func Load() *Config {
         fmt.Println("could not parse config.json")
     }
     return &config
+}
+
+func GetSensor(sensors []*Sensor, sensorId int) *Sensor {
+    for _, sensor := range sensors {
+        if sensor.SensorId == sensorId {
+            return sensor
+        }
+    }
+    return nil
+}
+
+func GetSensors(sensors []*Sensor, sensorIds []int) []*Sensor {
+    var truncatedSensors []*Sensor
+    for _, sensor := range sensors {
+        for _, sensorId := range sensorIds {
+            if sensor.SensorId == sensorId {
+                truncatedSensors = append(truncatedSensors, sensor)
+                break
+            }
+        }
+    }
+    return truncatedSensors
 }
